@@ -113,24 +113,22 @@
   }
   .pax-chip b{ font-weight:600; }
 
-  /* ---------- unified share-link bar ---------- */
-  .linkbar{
+  /* ---------- sync status bar ---------- */
+  .sync-bar{
     position: sticky; top: 0; z-index: 30;
-    display:flex; align-items:center; gap:10px;
+    display:flex; align-items:center; gap:8px;
     background: color-mix(in srgb, var(--paper) 88%, transparent);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
     padding: 10px 20px;
+    font-size: 12.5px; color: var(--ink-soft);
   }
-  .linkbar .lb-label{
-    font-size:11.5px; color: var(--ink-soft); letter-spacing:.03em; flex:none;
-    display:none;
+  .sync-bar .dot-status{
+    width:8px; height:8px; border-radius:50%; flex:none;
+    background: var(--ink-soft);
   }
-  .linkbar input{
-    flex:1; min-width:0; font-size:12.5px; color: var(--ink-soft);
-    text-overflow: ellipsis;
-  }
-  @media (min-width:640px){ .linkbar .lb-label{ display:block; } }
+  .sync-bar.connected .dot-status{ background: var(--teal); }
+  .sync-bar.offline .dot-status{ background: var(--coral); }
 
   select, textarea, input[type=text]{
     font-family: var(--font-body); font-size: 14.5px; color: var(--ink);
@@ -260,8 +258,7 @@
     .section-head{ margin: 30px 0 12px; }
     .section-head h2{ font-size: 19px; }
     .rec-grid{ grid-template-columns: 1fr; }
-    .linkbar{ padding: 8px 14px; gap: 8px; }
-    .linkbar input{ font-size: 11.5px; }
+    .sync-bar{ padding: 8px 14px; }
     .add-form .body-row{ flex-direction: column; align-items: stretch; }
     .add-form textarea{ min-width: 0; }
     .add-form .btns{ justify-content: flex-end; }
@@ -274,10 +271,9 @@
 </head>
 <body>
 
-<div class="linkbar">
-  <span class="lb-label">共有リンク（常にこの1つだけ）</span>
-  <input type="text" id="shareLink" readonly>
-  <button class="btn small" id="copyLinkBtn">コピー</button>
+<div class="sync-bar" id="syncBar">
+  <span class="dot-status" id="syncDot"></span>
+  <span id="syncText">接続中…</span>
 </div>
 
 <div class="wrap">
@@ -304,7 +300,7 @@
     </div>
   </section>
 
-  <p class="hint">各項目に希望を入力するときは、その場で名前（またはFamily）を選んでから「保存」を押してください。保存するとすぐこの画面に反映され、一番上の共有リンクも自動的に最新の内容に更新されます。他の家族に送るときは、必ずそのリンクをコピーして送ってください。受け取った人は、そのリンクを開いてから追加の入力・保存をしてください。</p>
+  <p class="hint">各項目に希望を入力するときは、その場で名前（またはFamily）を選んでから「保存」を押してください。保存するとすぐ全員の画面にリアルタイムで反映されます。リンクを送り合う必要はありません — このページのアドレスをブックマークしておけば、いつ開いても最新の内容が見られます。</p>
 
   <div class="section-head">
     <h2>日程</h2>
@@ -324,9 +320,17 @@
 
 <div class="toast" id="toast"></div>
 
-<script>
+<script type="module">
 (function(){
   "use strict";
+
+  // Firebase connects lazily (see initFirebase below) via dynamic import,
+  // so a blocked/slow network only disables live sync — it never stops
+  // the itinerary and recommendations (which need no network) from
+  // rendering.
+  var fbSet = null;
+  var fbRef = null;
+  var db = null;
 
   var PARTICIPANTS = [
     { id:"ueno_ai", name:"UENO / AI" },
@@ -372,11 +376,14 @@
     { cat:"ショッピング", area:"百道浜", name:"マークイズ福岡ももち", desc:"福岡タワー隣の大型モール。フードコートも充実。" }
   ];
 
-  var STORAGE_KEY = "fukuoka-trip-2026-entries";
+  var STORAGE_KEY = "fukuoka-trip-2026-entries-cache";
   var WHO_KEY = "fukuoka-trip-2026-who";
 
   // ---------- state ----------
-  var entries = loadEntries();
+  // Firebase Realtime Database is the single source of truth; the
+  // localStorage cache below only exists so the page has something to
+  // paint instantly before the first onValue snapshot arrives.
+  var entries = loadCachedEntries();
   var currentTab = "観光";
 
   function getLastWho(){ return localStorage.getItem(WHO_KEY) || PARTICIPANTS[0].id; }
@@ -397,67 +404,36 @@
 
   function slotKey(dayId, slotId){ return dayId + "_" + slotId; }
 
-  function toB64(obj){
-    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-  }
-  function fromB64(str){
-    return JSON.parse(decodeURIComponent(escape(atob(str))));
-  }
-
-  // Merge two entries objects without ever dropping data: for each
-  // day/slot/person cell, keep whichever side has the newer timestamp.
-  // This matters because entries only ever travel via manually-copied
-  // links, so opening someone else's (possibly older) link must not
-  // erase entries this device already knows about.
-  function mergeEntries(a, b){
-    var out = {};
-    var keys = {};
-    Object.keys(a).forEach(function(k){ keys[k] = true; });
-    Object.keys(b).forEach(function(k){ keys[k] = true; });
-    Object.keys(keys).forEach(function(key){
-      var cellA = a[key] || {};
-      var cellB = b[key] || {};
-      var pids = {};
-      Object.keys(cellA).forEach(function(p){ pids[p] = true; });
-      Object.keys(cellB).forEach(function(p){ pids[p] = true; });
-      var cell = {};
-      Object.keys(pids).forEach(function(pid){
-        var eA = cellA[pid], eB = cellB[pid];
-        if (eA && eB){
-          cell[pid] = (eB.ts || 0) > (eA.ts || 0) ? eB : eA;
-        } else {
-          cell[pid] = eA || eB;
-        }
-      });
-      out[key] = cell;
-    });
-    return out;
-  }
-
-  function loadEntries(){
-    var stored = {};
+  function loadCachedEntries(){
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) stored = JSON.parse(raw);
+      if (raw) return JSON.parse(raw);
     } catch(e){}
-
-    var hash = location.hash ? location.hash.slice(1) : "";
-    if (hash){
-      try { return mergeEntries(stored, fromB64(hash)); } catch(e) { /* corrupt hash, fall through */ }
-    }
-    return stored;
+    return {};
   }
 
-  function persist(){
+  function cacheEntries(){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e){}
-    var hash = toB64(entries);
-    history.replaceState(null, "", "#" + hash);
-    updateShareLink();
   }
 
-  function updateShareLink(){
-    var input = document.getElementById("shareLink");
-    input.value = location.href;
+  // Writes a single day/slot/person cell straight to Firebase. Every
+  // device listens via onValue, so this is what actually propagates the
+  // change to everyone else in real time.
+  function saveEntry(key, pid, text){
+    if (!db){
+      showToast("オンライン同期に未接続のため保存できません。電波・Wi-Fiを確認してもう一度お試しください。");
+      return;
+    }
+    fbSet(fbRef(db, "entries/" + key + "/" + pid), text ? { text: text, ts: Date.now() } : null);
+  }
+
+  function setSyncStatus(state){
+    var bar = document.getElementById("syncBar");
+    var text = document.getElementById("syncText");
+    bar.className = "sync-bar" + (state === "connected" ? " connected" : state === "offline" ? " offline" : "");
+    text.textContent = state === "connected" ? "リアルタイム同期中"
+      : state === "offline" ? "オフライン（表示は最後に同期した内容です）"
+      : "接続中…";
   }
 
   function showToast(msg){
@@ -584,20 +560,14 @@
     saveBtn.addEventListener("click", function(){
       var pid = whoSel.value;
       var val = ta.value.trim();
-      if (!entries[key]) entries[key] = {};
-      entries[key][pid] = { text: val, ts: Date.now() };
       setLastWho(pid);
-      persist();
-      renderDays();
-      showToast("保存しました。共有リンクを更新しました。");
+      saveEntry(key, pid, val);
+      showToast("保存しました。全員の画面に反映されます。");
     });
 
     delBtn.addEventListener("click", function(){
       var pid = whoSel.value;
-      if (!entries[key]) entries[key] = {};
-      entries[key][pid] = { text: "", ts: Date.now() };
-      persist();
-      renderDays();
+      saveEntry(key, pid, "");
       showToast("削除しました。");
     });
 
@@ -694,14 +664,11 @@
       addBtn.addEventListener("click", function(){
         var pid = whoSel.value;
         var key = slotKey(daySel.value, slotSel.value);
-        if (!entries[key]) entries[key] = {};
-        var existing = (entries[key][pid] && entries[key][pid].text) || "";
+        var existing = (entries[key] && entries[key][pid] && entries[key][pid].text) || "";
         var line = "(候補) " + r.name + " — " + mapsUrl(r.name, r.area);
         var next = existing ? existing + "\n" + line : line;
-        entries[key][pid] = { text: next, ts: Date.now() };
         setLastWho(pid);
-        persist();
-        renderDays();
+        saveEntry(key, pid, next);
         showToast(r.name + " を Day" + DAYS.find(function(d){return d.id===daySel.value;}).n + " " + slotSel.options[slotSel.selectedIndex].text + "（" + participantName(pid) + "）に追加しました。");
       });
 
@@ -716,44 +683,54 @@
     });
   }
 
-  // ---------- copy link ----------
-  document.getElementById("copyLinkBtn").addEventListener("click", function(){
-    var input = document.getElementById("shareLink");
-    var url = input.value;
-    if (navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(url).then(function(){
-        showToast("リンクをコピーしました。");
-      }).catch(function(){ fallbackCopy(input); });
-    } else {
-      fallbackCopy(input);
-    }
-  });
-
-  function fallbackCopy(input){
-    input.focus();
-    input.select();
-    try {
-      document.execCommand("copy");
-      showToast("リンクをコピーしました。");
-    } catch(e){
-      showToast("コピーできませんでした。手動で選択してください。");
-    }
-  }
-
   // ---------- init ----------
+  // These need no network and must never be blocked by it.
   renderDays();
   renderTabs();
   renderRecs();
-  persist();
 
-  // If someone pastes a fresher link into a tab that already has this page
-  // open, the browser treats it as a same-document fragment navigation and
-  // won't reload the script — so pick up the new hash manually and merge it.
-  window.addEventListener("hashchange", function(){
-    entries = loadEntries();
-    persist();
-    renderDays();
-  });
+  // Firebase config is safe to expose client-side (it's not a secret —
+  // access is governed by the database's security rules, not by hiding
+  // this object). Loaded via dynamic import so a blocked/slow network
+  // degrades to offline mode instead of breaking the whole page.
+  var firebaseConfig = {
+    apiKey: "AIzaSyD48s5vodN5H3wCRw_HyekkXQRBWE_Ijjs",
+    authDomain: "fukuokatripplan.firebaseapp.com",
+    databaseURL: "https://fukuokatripplan-default-rtdb.firebaseio.com",
+    projectId: "fukuokatripplan",
+    storageBucket: "fukuokatripplan.firebasestorage.app",
+    messagingSenderId: "503574437476",
+    appId: "1:503574437476:web:0df95e1f59d1a22e89c971"
+  };
+
+  (async function initFirebase(){
+    try {
+      var appMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+      var dbMod = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+
+      var fbApp = appMod.initializeApp(firebaseConfig);
+      db = dbMod.getDatabase(fbApp);
+      fbSet = dbMod.set;
+      fbRef = dbMod.ref;
+
+      // Firebase is the single source of truth: every device (including
+      // the one that just wrote) receives the full "entries" tree here
+      // and re-renders. This is what makes edits show up on everyone's
+      // screen without passing links around.
+      dbMod.onValue(fbRef(db, "entries"), function(snapshot){
+        entries = snapshot.val() || {};
+        cacheEntries();
+        renderDays();
+      });
+
+      dbMod.onValue(fbRef(db, ".info/connected"), function(snapshot){
+        setSyncStatus(snapshot.val() === true ? "connected" : "offline");
+      });
+    } catch(e){
+      setSyncStatus("offline");
+      showToast("オンライン同期に接続できませんでした。表示は端末に保存された最後の内容です。");
+    }
+  })();
 
 })();
 </script>
