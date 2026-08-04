@@ -404,16 +404,48 @@
     return JSON.parse(decodeURIComponent(escape(atob(str))));
   }
 
+  // Merge two entries objects without ever dropping data: for each
+  // day/slot/person cell, keep whichever side has the newer timestamp.
+  // This matters because entries only ever travel via manually-copied
+  // links, so opening someone else's (possibly older) link must not
+  // erase entries this device already knows about.
+  function mergeEntries(a, b){
+    var out = {};
+    var keys = {};
+    Object.keys(a).forEach(function(k){ keys[k] = true; });
+    Object.keys(b).forEach(function(k){ keys[k] = true; });
+    Object.keys(keys).forEach(function(key){
+      var cellA = a[key] || {};
+      var cellB = b[key] || {};
+      var pids = {};
+      Object.keys(cellA).forEach(function(p){ pids[p] = true; });
+      Object.keys(cellB).forEach(function(p){ pids[p] = true; });
+      var cell = {};
+      Object.keys(pids).forEach(function(pid){
+        var eA = cellA[pid], eB = cellB[pid];
+        if (eA && eB){
+          cell[pid] = (eB.ts || 0) > (eA.ts || 0) ? eB : eA;
+        } else {
+          cell[pid] = eA || eB;
+        }
+      });
+      out[key] = cell;
+    });
+    return out;
+  }
+
   function loadEntries(){
-    var hash = location.hash ? location.hash.slice(1) : "";
-    if (hash){
-      try { return fromB64(hash); } catch(e) { /* fall through */ }
-    }
+    var stored = {};
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
+      if (raw) stored = JSON.parse(raw);
     } catch(e){}
-    return {};
+
+    var hash = location.hash ? location.hash.slice(1) : "";
+    if (hash){
+      try { return mergeEntries(stored, fromB64(hash)); } catch(e) { /* corrupt hash, fall through */ }
+    }
+    return stored;
   }
 
   function persist(){
@@ -553,11 +585,7 @@
       var pid = whoSel.value;
       var val = ta.value.trim();
       if (!entries[key]) entries[key] = {};
-      if (val){
-        entries[key][pid] = { text: val, ts: Date.now() };
-      } else {
-        delete entries[key][pid];
-      }
+      entries[key][pid] = { text: val, ts: Date.now() };
       setLastWho(pid);
       persist();
       renderDays();
@@ -566,7 +594,8 @@
 
     delBtn.addEventListener("click", function(){
       var pid = whoSel.value;
-      if (entries[key]) delete entries[key][pid];
+      if (!entries[key]) entries[key] = {};
+      entries[key][pid] = { text: "", ts: Date.now() };
       persist();
       renderDays();
       showToast("削除しました。");
@@ -716,6 +745,15 @@
   renderTabs();
   renderRecs();
   persist();
+
+  // If someone pastes a fresher link into a tab that already has this page
+  // open, the browser treats it as a same-document fragment navigation and
+  // won't reload the script — so pick up the new hash manually and merge it.
+  window.addEventListener("hashchange", function(){
+    entries = loadEntries();
+    persist();
+    renderDays();
+  });
 
 })();
 </script>
