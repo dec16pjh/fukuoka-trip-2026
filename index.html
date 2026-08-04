@@ -486,7 +486,7 @@
       var saved = localStorage.getItem(LANG_KEY);
       if (saved === "ja" || saved === "ko") return saved;
     } catch(e){}
-    return (navigator.language || "").toLowerCase().indexOf("ko") === 0 ? "ko" : "ja";
+    return "ja";
   }
 
   function getLastWho(){ return localStorage.getItem(WHO_KEY) || PARTICIPANTS[0].id; }
