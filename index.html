@@ -173,15 +173,11 @@
   .day-head-top{ display:flex; align-items:center; gap:14px; }
   .day-flight{
     font-size: 12.5px; font-weight:600; color: var(--indigo);
-    padding-left: 54px; display:flex; align-items:center; gap:6px;
+    display:flex; align-items:center; gap:6px;
   }
-  .day-num{
-    font-family: var(--font-display); font-size: 26px; font-weight:600; color: var(--indigo);
-    width: 40px; text-align:center;
-  }
-  .day-date{ flex:1; }
-  .day-date b{ font-size: 15.5px; }
-  .day-date span{ display:block; font-size:12.5px; color: var(--ink-soft); margin-top:1px; }
+  .day-date{ flex:1; display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .day-date b{ font-family: var(--font-display); font-size: 24px; font-weight:600; }
+  .day-date span{ font-size:15px; font-weight:600; color: var(--indigo); letter-spacing:.02em; }
   .day-note{
     font-size: 11.5px; padding: 4px 10px; border-radius: 999px; white-space:nowrap;
     background: rgba(193,80,62,0.12); color: var(--coral); border:1px solid rgba(193,80,62,0.3);
@@ -430,7 +426,6 @@
       head.className = "day-head";
       head.innerHTML =
         '<div class="day-head-top">' +
-          '<div class="day-num">' + day.n + '</div>' +
           '<div class="day-date"><b>' + day.date + '（' + day.wd + '）</b>' +
           '<span>Day ' + day.n + '</span></div>' +
           (day.note ? '<div class="day-note">' + day.note + '</div>' : "") +
