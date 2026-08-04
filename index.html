@@ -129,6 +129,14 @@
   }
   .sync-bar.connected .dot-status{ background: var(--teal); }
   .sync-bar.offline .dot-status{ background: var(--coral); }
+  .sync-bar .sync-text{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lang-toggle{ display:flex; gap:4px; flex:none; }
+  .lang-btn{
+    font-family: var(--font-body); font-size: 11.5px; font-weight:600; cursor:pointer;
+    border-radius: 999px; padding: 5px 10px; border: 1px solid var(--line);
+    background: var(--paper-3); color: var(--ink-soft);
+  }
+  .lang-btn.active{ background: var(--indigo); color: #F4EFE1; border-color: var(--indigo); }
 
   select, textarea, input[type=text]{
     font-family: var(--font-body); font-size: 14.5px; color: var(--ink);
@@ -273,25 +281,25 @@
 
 <div class="sync-bar" id="syncBar">
   <span class="dot-status" id="syncDot"></span>
-  <span id="syncText">接続中…</span>
+  <span class="sync-text" id="syncText">接続中…</span>
+  <div class="lang-toggle" id="langToggle">
+    <button class="lang-btn" data-lang="ja" type="button">日本語</button>
+    <button class="lang-btn" data-lang="ko" type="button">한국어</button>
+  </div>
 </div>
 
 <div class="wrap">
 
   <section class="ticket">
-    <p class="eyebrow">Family Trip · 家族旅行</p>
-    <h1>福岡旅行プラン 2026</h1>
+    <p class="eyebrow" id="heroEyebrow"></p>
+    <h1 id="heroTitle"></h1>
     <div class="route">
-      <div><span class="city">ソウル/仁川</span><span class="code">ICN</span></div>
+      <div><span class="city" id="fromCity"></span><span class="code">ICN</span></div>
       <div class="plane"></div>
-      <div><span class="city">福岡</span><span class="code">FUK</span></div>
+      <div><span class="city" id="toCity"></span><span class="code">FUK</span></div>
     </div>
     <div class="ticket-dash"></div>
-    <div class="legs">
-      <div class="leg"><b>行き｜LJ265</b><span>8/6(木) ICN 15:35 発 → FUK 17:00 着</span></div>
-      <div class="leg"><b>帰り①｜LJ274</b><span>8/9(日) FUK 12:10 発 → ICN 13:40 着</span></div>
-      <div class="leg"><b>帰り②｜LJ274</b><span>8/12(水) FUK 12:10 発 → ICN 13:40 着</span></div>
-    </div>
+    <div class="legs" id="legs"></div>
     <div class="pax-row">
       <span class="pax-chip"><b>UENO / AI</b> ・8/6–8/12</span>
       <span class="pax-chip"><b>PARK / SUYON</b> ・8/6–8/12</span>
@@ -300,22 +308,22 @@
     </div>
   </section>
 
-  <p class="hint">各項目に希望を入力するときは、その場で名前（またはFamily）を選んでから「保存」を押してください。保存するとすぐ全員の画面にリアルタイムで反映されます。リンクを送り合う必要はありません — このページのアドレスをブックマークしておけば、いつ開いても最新の内容が見られます。</p>
+  <p class="hint" id="hintText"></p>
 
   <div class="section-head">
-    <h2>日程</h2>
-    <span class="count">2026/8/6(木) – 8/12(水)</span>
+    <h2 id="scheduleHeading"></h2>
+    <span class="count" id="scheduleRange"></span>
   </div>
   <div id="days"></div>
 
   <div class="section-head">
-    <h2>おすすめスポット・お店</h2>
-    <span class="count">気になる場所はそのまま日程に追加できます</span>
+    <h2 id="recHeading"></h2>
+    <span class="count" id="recSub"></span>
   </div>
   <div class="tabs" id="tabs"></div>
   <div class="rec-grid" id="recGrid"></div>
 
-  <footer>UENO / AI ・ PARK / JONGHO ・ PARK / SUBIN ・ PARK / SUYON の福岡旅行のために作成</footer>
+  <footer id="footerText"></footer>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -337,57 +345,156 @@
     { id:"park_jongho", name:"PARK / JONGHO" },
     { id:"park_subin", name:"PARK / SUBIN" },
     { id:"park_suyon", name:"PARK / SUYON" },
-    { id:"family", name:"Family（家族みんな）" }
+    { id:"family", name:null }
   ];
 
   var SLOTS = [
-    { id:"morning", label:"朝", time:"8:00–11:00" },
-    { id:"lunch", label:"昼", time:"11:00–17:00" },
-    { id:"dinner", label:"夜", time:"17:00–21:00" }
+    { id:"morning", time:"8:00–11:00" },
+    { id:"lunch", time:"11:00–17:00" },
+    { id:"dinner", time:"17:00–21:00" }
   ];
 
   var DAYS = [
-    { id:"d1", n:1, date:"8/6", wd:"木", note:"到着日",
-      flight:"LJ265｜ICN 15:35 発 → FUK 17:00 着" },
-    { id:"d2", n:2, date:"8/7", wd:"金", note:"" },
-    { id:"d3", n:3, date:"8/8", wd:"土", note:"" },
-    { id:"d4", n:4, date:"8/9", wd:"日", note:"JONGHO・SUBIN 帰国",
-      flight:"LJ274｜FUK 12:10 発 → ICN 13:40 着（JONGHO・SUBIN 搭乗）" },
-    { id:"d5", n:5, date:"8/10", wd:"月", note:"AI・SUYON のみ" },
-    { id:"d6", n:6, date:"8/11", wd:"火", note:"AI・SUYON のみ" },
-    { id:"d7", n:7, date:"8/12", wd:"水", note:"AI・SUYON 帰国",
-      flight:"LJ274｜FUK 12:10 発 → ICN 13:40 着（AI・SUYON 搭乗）" }
+    { id:"d1", n:1, date:"8/6", wd:{ja:"木",ko:"목"}, note:{ja:"到着日",ko:"도착일"},
+      flight:{ code:"LJ265", dep:"ICN 15:35", arr:"FUK 17:00" } },
+    { id:"d2", n:2, date:"8/7", wd:{ja:"金",ko:"금"} },
+    { id:"d3", n:3, date:"8/8", wd:{ja:"土",ko:"토"} },
+    { id:"d4", n:4, date:"8/9", wd:{ja:"日",ko:"일"}, note:{ja:"JONGHO・SUBIN 帰国",ko:"JONGHO・SUBIN 귀국"},
+      flight:{ code:"LJ274", dep:"FUK 12:10", arr:"ICN 13:40", boarding:{ja:"JONGHO・SUBIN 搭乗",ko:"JONGHO・SUBIN 탑승"} } },
+    { id:"d5", n:5, date:"8/10", wd:{ja:"月",ko:"월"}, note:{ja:"AI・SUYON のみ",ko:"AI・SUYON 만"} },
+    { id:"d6", n:6, date:"8/11", wd:{ja:"火",ko:"화"}, note:{ja:"AI・SUYON のみ",ko:"AI・SUYON 만"} },
+    { id:"d7", n:7, date:"8/12", wd:{ja:"水",ko:"수"}, note:{ja:"AI・SUYON 帰国",ko:"AI・SUYON 귀국"},
+      flight:{ code:"LJ274", dep:"FUK 12:10", arr:"ICN 13:40", boarding:{ja:"AI・SUYON 搭乗",ko:"AI・SUYON 탑승"} } }
   ];
 
   var RECS = [
-    { cat:"観光", area:"百道浜", name:"福岡タワー", desc:"海浜公園そばに建つ234mのタワー。夜景が特に人気。" },
-    { cat:"観光", area:"中央区", name:"大濠公園", desc:"池を囲む遊歩道が気持ちいい市民公園。ボートもあり。" },
-    { cat:"観光", area:"太宰府市", name:"太宰府天満宮", desc:"学問の神様を祀る古社。参道の梅ヶ枝餅も名物。" },
-    { cat:"観光", area:"中洲", name:"中洲屋台街", desc:"那珂川沿いに屋台が並ぶ、博多の夜の名物エリア。" },
-    { cat:"観光", area:"東区", name:"マリンワールド海の中道", desc:"イルカ・アシカショーが人気の水族館。" },
-    { cat:"観光", area:"博多区", name:"博多町家ふるさと館", desc:"博多の伝統文化と町家建築を紹介するミニ資料館。" },
-    { cat:"グルメ", area:"天神", name:"一蘭 天神西通り店", desc:"博多とんこつラーメンの有名店。一人集中カウンター。" },
-    { cat:"グルメ", area:"博多区", name:"博多もつ鍋 やまや", desc:"福岡名物もつ鍋を気軽に楽しめる人気店。" },
-    { cat:"グルメ", area:"天神", name:"元祖 博多めんたい重 天神本店", desc:"明太子をたっぷりのせた重箱ご飯が名物。" },
-    { cat:"グルメ", area:"中洲", name:"ふくや 中洲本店", desc:"明太子の老舗。お土産探しにも便利。" },
-    { cat:"グルメ", area:"今泉", name:"鉄なべ 今泉店", desc:"博多名物、鉄鍋で焼く餃子の専門店。" },
-    { cat:"ショッピング", area:"博多区", name:"キャナルシティ博多", desc:"噴水ショーが名物の複合商業施設。飲食店も豊富。" },
-    { cat:"ショッピング", area:"天神", name:"天神地下街", desc:"天神駅直結、雨でも歩ける地下ショッピングモール。" },
-    { cat:"ショッピング", area:"百道浜", name:"マークイズ福岡ももち", desc:"福岡タワー隣の大型モール。フードコートも充実。" }
+    { cat:"sightseeing", area:{ja:"百道浜",ko:"모모치하마"}, name:{ja:"福岡タワー",ko:"후쿠오카타워"},
+      desc:{ja:"海浜公園そばに建つ234mのタワー。夜景が特に人気。",ko:"해변공원 옆에 서 있는 234m 타워. 특히 야경이 인기."} },
+    { cat:"sightseeing", area:{ja:"中央区",ko:"주오구"}, name:{ja:"大濠公園",ko:"오호리공원"},
+      desc:{ja:"池を囲む遊歩道が気持ちいい市民公園。ボートもあり。",ko:"연못을 둘러싼 산책로가 기분 좋은 시민공원. 보트도 탈 수 있음."} },
+    { cat:"sightseeing", area:{ja:"太宰府市",ko:"다자이후시"}, name:{ja:"太宰府天満宮",ko:"다자이후 텐만구"},
+      desc:{ja:"学問の神様を祀る古社。参道の梅ヶ枝餅も名物。",ko:"학문의 신을 모시는 유서 깊은 신사. 참배길 명물인 우메가에모치도 유명."} },
+    { cat:"sightseeing", area:{ja:"中洲",ko:"나카스"}, name:{ja:"中洲屋台街",ko:"나카스 포장마차거리"},
+      desc:{ja:"那珂川沿いに屋台が並ぶ、博多の夜の名物エリア。",ko:"나카강변을 따라 포장마차가 늘어선, 하카타의 밤을 대표하는 명물 거리."} },
+    { cat:"sightseeing", area:{ja:"東区",ko:"히가시구"}, name:{ja:"マリンワールド海の中道",ko:"마린월드 우미노나카미치"},
+      desc:{ja:"イルカ・アシカショーが人気の水族館。",ko:"돌고래・바다사자 쇼가 인기인 수족관."} },
+    { cat:"sightseeing", area:{ja:"博多区",ko:"하카타구"}, name:{ja:"博多町家ふるさと館",ko:"하카타마치야 후루사토칸"},
+      desc:{ja:"博多の伝統文化と町家建築を紹介するミニ資料館。",ko:"하카타의 전통문화와 마치야 건축을 소개하는 미니 자료관."} },
+    { cat:"food", area:{ja:"天神",ko:"텐진"}, name:{ja:"一蘭 天神西通り店",ko:"이치란 텐진 니시도리점"},
+      desc:{ja:"博多とんこつラーメンの有名店。一人集中カウンター。",ko:"하카타 돈코츠 라멘의 유명 맛집. 1인 집중 카운터석."} },
+    { cat:"food", area:{ja:"博多区",ko:"하카타구"}, name:{ja:"博多もつ鍋 やまや",ko:"하카타 모츠나베 야마야"},
+      desc:{ja:"福岡名物もつ鍋を気軽に楽しめる人気店。",ko:"후쿠오카 명물 모츠나베를 부담 없이 즐길 수 있는 인기 맛집."} },
+    { cat:"food", area:{ja:"天神",ko:"텐진"}, name:{ja:"元祖 博多めんたい重 天神本店",ko:"원조 하카타 멘타이주 텐진본점"},
+      desc:{ja:"明太子をたっぷりのせた重箱ご飯が名物。",ko:"명란젓을 듬뿍 올린 덮밥 도시락이 명물."} },
+    { cat:"food", area:{ja:"中洲",ko:"나카스"}, name:{ja:"ふくや 中洲本店",ko:"후쿠야 나카스본점"},
+      desc:{ja:"明太子の老舗。お土産探しにも便利。",ko:"명란젓 원조 노포. 기념품 구입에도 편리."} },
+    { cat:"food", area:{ja:"今泉",ko:"이마이즈미"}, name:{ja:"鉄なべ 今泉店",ko:"테츠나베 이마이즈미점"},
+      desc:{ja:"博多名物、鉄鍋で焼く餃子の専門店。",ko:"하카타 명물, 철냄비에 구워내는 만두(교자) 전문점."} },
+    { cat:"shopping", area:{ja:"博多区",ko:"하카타구"}, name:{ja:"キャナルシティ博多",ko:"캐널시티 하카타"},
+      desc:{ja:"噴水ショーが名物の複合商業施設。飲食店も豊富。",ko:"분수쇼가 명물인 복합 상업시설. 음식점도 다양."} },
+    { cat:"shopping", area:{ja:"天神",ko:"텐진"}, name:{ja:"天神地下街",ko:"텐진 지하상가"},
+      desc:{ja:"天神駅直結、雨でも歩ける地下ショッピングモール。",ko:"텐진역과 바로 연결, 비 오는 날에도 걸을 수 있는 지하 쇼핑몰."} },
+    { cat:"shopping", area:{ja:"百道浜",ko:"모모치하마"}, name:{ja:"マークイズ福岡ももち",ko:"마크이즈 후쿠오카 모모치"},
+      desc:{ja:"福岡タワー隣の大型モール。フードコートも充実。",ko:"후쿠오카타워 옆의 대형 몰. 푸드코트도 충실."} }
   ];
+
+  var STRINGS = {
+    ja: {
+      title: "福岡家族旅行 2026 プランニング",
+      heroEyebrow: "Family Trip · 家族旅行",
+      heroTitle: "福岡旅行プラン 2026",
+      fromCity: "ソウル/仁川",
+      toCity: "福岡",
+      legLabels: ["行き", "帰り①", "帰り②"],
+      depWord: "発", arrWord: "着",
+      dayLabel: "Day",
+      hint: "各項目に希望を入力するときは、その場で名前（またはFamily）を選んでから「保存」を押してください。保存するとすぐ全員の画面にリアルタイムで反映されます。リンクを送り合う必要はありません — このページのアドレスをブックマークしておけば、いつ開いても最新の内容が見られます。",
+      scheduleHeading: "日程", scheduleRange: "2026/8/6(木) – 8/12(水)",
+      recHeading: "おすすめスポット・お店", recSub: "気になる場所はそのまま日程に追加できます",
+      footer: "UENO / AI ・ PARK / JONGHO ・ PARK / SUBIN ・ PARK / SUYON の福岡旅行のために作成",
+      emptyNote: "まだ希望が入力されていません。",
+      whoLabel: "誰の希望？",
+      placeholderFamily: "家族みんなの希望を入力",
+      placeholderPersonSuffix: " の希望を入力",
+      placeholderExample: "（例：太宰府天満宮を観光したい）",
+      saveBtn: "保存", deleteBtn: "削除",
+      saveToast: "保存しました。全員の画面に反映されます。",
+      deleteToast: "削除しました。",
+      mapLink: "地図を見る ↗",
+      addBtn: "＋ 追加",
+      addToastTpl: function(name, day, slot, who){ return name + " を " + day + " " + slot + "（" + who + "）に追加しました。"; },
+      offlineSaveToast: "オンライン同期に未接続のため保存できません。電波・Wi-Fiを確認してもう一度お試しください。",
+      connecting: "接続中…", connected: "リアルタイム同期中",
+      offline: "オフライン（表示は最後に同期した内容です）",
+      offlineInitToast: "オンライン同期に接続できませんでした。表示は端末に保存された最後の内容です。",
+      familyMembers: "家族みんな",
+      candidatePrefix: "(候補) ",
+      slotLabels: { morning:"朝", lunch:"昼", dinner:"夜" },
+      cats: { sightseeing:"観光", food:"グルメ", shopping:"ショッピング" }
+    },
+    ko: {
+      title: "후쿠오카 가족여행 2026 플래닝",
+      heroEyebrow: "Family Trip · 가족여행",
+      heroTitle: "후쿠오카 여행 플랜 2026",
+      fromCity: "서울/인천",
+      toCity: "후쿠오카",
+      legLabels: ["가는편", "오는편①", "오는편②"],
+      depWord: "출발", arrWord: "도착",
+      dayLabel: "Day",
+      hint: "각 항목에 희망사항을 입력할 때는 그 자리에서 이름(또는 Family)을 선택한 뒤 「저장」을 눌러주세요. 저장하면 바로 모두의 화면에 실시간으로 반영됩니다. 링크를 주고받을 필요가 없습니다 — 이 페이지 주소를 북마크해두면 언제 열어도 최신 내용을 볼 수 있습니다.",
+      scheduleHeading: "일정", scheduleRange: "2026/8/6(목) – 8/12(수)",
+      recHeading: "추천 스팟・맛집", recSub: "관심 있는 장소는 그대로 일정에 추가할 수 있습니다",
+      footer: "UENO / AI · PARK / JONGHO · PARK / SUBIN · PARK / SUYON 의 후쿠오카 여행을 위해 제작",
+      emptyNote: "아직 입력된 희망사항이 없습니다.",
+      whoLabel: "누구의 희망사항인가요?",
+      placeholderFamily: "가족 모두의 희망사항을 입력",
+      placeholderPersonSuffix: "의 희망사항을 입력",
+      placeholderExample: "(예: 다자이후 텐만구를 관광하고 싶어요)",
+      saveBtn: "저장", deleteBtn: "삭제",
+      saveToast: "저장했습니다. 모두의 화면에 반영됩니다.",
+      deleteToast: "삭제했습니다.",
+      mapLink: "지도 보기 ↗",
+      addBtn: "＋ 추가",
+      addToastTpl: function(name, day, slot, who){ return name + "을(를) " + day + " " + slot + "(" + who + ")에 추가했습니다."; },
+      offlineSaveToast: "온라인 동기화가 연결되지 않아 저장할 수 없습니다. 전파・Wi-Fi를 확인한 뒤 다시 시도해주세요.",
+      connecting: "연결 중…", connected: "실시간 동기화 중",
+      offline: "오프라인 (마지막으로 동기화된 내용입니다)",
+      offlineInitToast: "온라인 동기화에 연결하지 못했습니다. 기기에 저장된 마지막 내용을 표시합니다.",
+      familyMembers: "가족 모두",
+      candidatePrefix: "(후보) ",
+      slotLabels: { morning:"아침", lunch:"점심", dinner:"저녁" },
+      cats: { sightseeing:"관광", food:"맛집", shopping:"쇼핑" }
+    }
+  };
 
   var STORAGE_KEY = "fukuoka-trip-2026-entries-cache";
   var WHO_KEY = "fukuoka-trip-2026-who";
+  var LANG_KEY = "fukuoka-trip-2026-lang";
 
   // ---------- state ----------
   // Firebase Realtime Database is the single source of truth; the
   // localStorage cache below only exists so the page has something to
   // paint instantly before the first onValue snapshot arrives.
   var entries = loadCachedEntries();
-  var currentTab = "観光";
+  var currentTab = "sightseeing";
+  var currentLang = loadLang();
+
+  function t(){ return STRINGS[currentLang]; }
+
+  function loadLang(){
+    try {
+      var saved = localStorage.getItem(LANG_KEY);
+      if (saved === "ja" || saved === "ko") return saved;
+    } catch(e){}
+    return (navigator.language || "").toLowerCase().indexOf("ko") === 0 ? "ko" : "ja";
+  }
 
   function getLastWho(){ return localStorage.getItem(WHO_KEY) || PARTICIPANTS[0].id; }
   function setLastWho(id){ try { localStorage.setItem(WHO_KEY, id); } catch(e){} }
+
+  function participantDisplayName(p){
+    return p.id === "family" ? "Family（" + t().familyMembers + "）" : p.name;
+  }
 
   function buildWhoSelect(selectedId){
     var sel = document.createElement("select");
@@ -395,7 +502,7 @@
     PARTICIPANTS.forEach(function(p){
       var opt = document.createElement("option");
       opt.value = p.id;
-      opt.textContent = p.name;
+      opt.textContent = participantDisplayName(p);
       if (p.id === selectedId) opt.selected = true;
       sel.appendChild(opt);
     });
@@ -403,6 +510,41 @@
   }
 
   function slotKey(dayId, slotId){ return dayId + "_" + slotId; }
+
+  // ---------- free-text translation ----------
+  // Family members type their wishes in whichever language they like.
+  // Detect Korean (Hangul) vs Japanese (kana/kanji) by Unicode range and,
+  // when it doesn't match the page's current language, translate it via
+  // the free MyMemory API. Results are cached so repeated re-renders
+  // (every Firebase snapshot) don't refetch the same string.
+  var HANGUL_RE = /[가-힣]/;
+  var KANA_KANJI_RE = /[぀-ヿ一-鿿]/;
+  var translationCache = {};
+
+  function detectTextLang(text){
+    if (HANGUL_RE.test(text)) return "ko";
+    if (KANA_KANJI_RE.test(text)) return "ja";
+    return null;
+  }
+
+  function translateForDisplay(text, targetLang, cb){
+    var source = detectTextLang(text);
+    if (!source || source === targetLang){ return; }
+    var cacheKey = source + ">" + targetLang + ":" + text;
+    if (translationCache.hasOwnProperty(cacheKey)){
+      cb(translationCache[cacheKey]);
+      return;
+    }
+    var url = "https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) +
+      "&langpair=" + source + "|" + targetLang;
+    fetch(url).then(function(res){ return res.json(); }).then(function(data){
+      var translated = data && data.responseData && data.responseData.translatedText;
+      if (translated && translated.toLowerCase() !== text.toLowerCase()){
+        translationCache[cacheKey] = translated;
+        cb(translated);
+      }
+    }).catch(function(){ /* keep showing the original text */ });
+  }
 
   function loadCachedEntries(){
     try {
@@ -421,35 +563,43 @@
   // change to everyone else in real time.
   function saveEntry(key, pid, text){
     if (!db){
-      showToast("オンライン同期に未接続のため保存できません。電波・Wi-Fiを確認してもう一度お試しください。");
+      showToast(t().offlineSaveToast);
       return;
     }
     fbSet(fbRef(db, "entries/" + key + "/" + pid), text ? { text: text, ts: Date.now() } : null);
   }
 
+  var lastSyncState = "connecting";
   function setSyncStatus(state){
+    lastSyncState = state;
     var bar = document.getElementById("syncBar");
     var text = document.getElementById("syncText");
     bar.className = "sync-bar" + (state === "connected" ? " connected" : state === "offline" ? " offline" : "");
-    text.textContent = state === "connected" ? "リアルタイム同期中"
-      : state === "offline" ? "オフライン（表示は最後に同期した内容です）"
-      : "接続中…";
+    text.textContent = state === "connected" ? t().connected
+      : state === "offline" ? t().offline
+      : t().connecting;
   }
 
   function showToast(msg){
-    var t = document.getElementById("toast");
-    t.textContent = msg;
-    t.classList.add("show");
+    var toastEl = document.getElementById("toast");
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
     clearTimeout(showToast._tm);
-    showToast._tm = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+    showToast._tm = setTimeout(function(){ toastEl.classList.remove("show"); }, 2200);
   }
 
   function participantName(id){
-    for (var i=0;i<PARTICIPANTS.length;i++) if (PARTICIPANTS[i].id===id) return PARTICIPANTS[i].name;
+    for (var i=0;i<PARTICIPANTS.length;i++) if (PARTICIPANTS[i].id===id) return participantDisplayName(PARTICIPANTS[i]);
     return id;
   }
 
   // ---------- render: days ----------
+  function flightLine(flight){
+    var line = flight.code + "｜" + flight.dep + " " + t().depWord + " → " + flight.arr + " " + t().arrWord;
+    if (flight.boarding) line += "（" + flight.boarding[currentLang] + "）";
+    return line;
+  }
+
   function renderDays(){
     var host = document.getElementById("days");
     host.innerHTML = "";
@@ -462,11 +612,11 @@
       head.className = "day-head";
       head.innerHTML =
         '<div class="day-head-top">' +
-          '<div class="day-date"><b>' + day.date + '（' + day.wd + '）</b>' +
-          '<span>Day ' + day.n + '</span></div>' +
-          (day.note ? '<div class="day-note">' + day.note + '</div>' : "") +
+          '<div class="day-date"><b>' + day.date + '（' + day.wd[currentLang] + '）</b>' +
+          '<span>' + t().dayLabel + ' ' + day.n + '</span></div>' +
+          (day.note ? '<div class="day-note">' + day.note[currentLang] + '</div>' : "") +
         '</div>' +
-        (day.flight ? '<div class="day-flight">✈ ' + day.flight + '</div>' : "");
+        (day.flight ? '<div class="day-flight">✈ ' + flightLine(day.flight) + '</div>' : "");
       dayEl.appendChild(head);
 
       var slotsWrap = document.createElement("div");
@@ -494,7 +644,7 @@
     head.className = "slot-head";
     head.innerHTML =
       '<span class="dot ' + slot.id + '"></span>' +
-      '<b>' + slot.label + '</b>' +
+      '<b>' + t().slotLabels[slot.id] + '</b>' +
       '<span class="time">' + slot.time + '</span>';
     slotEl.appendChild(head);
 
@@ -509,18 +659,24 @@
         var nameEl = document.createElement("div");
         nameEl.className = "name";
         nameEl.textContent = participantName(pid);
+        var originalText = data[pid].text;
         var textEl = document.createElement("div");
         textEl.className = "text";
-        textEl.textContent = data[pid].text;
+        textEl.textContent = originalText;
         row.appendChild(nameEl);
         row.appendChild(textEl);
         list.appendChild(row);
+
+        translateForDisplay(originalText, currentLang, function(translated){
+          textEl.textContent = translated;
+          textEl.title = originalText;
+        });
       });
       slotEl.appendChild(list);
     } else {
       var empty = document.createElement("div");
       empty.className = "empty-note";
-      empty.textContent = "まだ希望が入力されていません。";
+      empty.textContent = t().emptyNote;
       slotEl.appendChild(empty);
     }
 
@@ -530,7 +686,7 @@
     var whoRow = document.createElement("div");
     whoRow.className = "who-row";
     var whoLabel = document.createElement("label");
-    whoLabel.textContent = "誰の希望？";
+    whoLabel.textContent = t().whoLabel;
     var whoSel = buildWhoSelect(getLastWho());
     whoRow.appendChild(whoLabel);
     whoRow.appendChild(whoSel);
@@ -542,16 +698,16 @@
     btns.className = "btns";
     var saveBtn = document.createElement("button");
     saveBtn.className = "btn small";
-    saveBtn.textContent = "保存";
+    saveBtn.textContent = t().saveBtn;
     var delBtn = document.createElement("button");
     delBtn.className = "btn small danger";
-    delBtn.textContent = "削除";
+    delBtn.textContent = t().deleteBtn;
 
     function syncForm(){
       var pid = whoSel.value;
       var existing = data[pid] && data[pid].text;
       ta.value = existing || "";
-      ta.placeholder = (pid === "family" ? "家族みんなの希望を入力" : participantName(pid) + " の希望を入力") + "（例：太宰府天満宮を観光したい）";
+      ta.placeholder = (pid === "family" ? t().placeholderFamily : participantName(pid) + t().placeholderPersonSuffix) + t().placeholderExample;
       delBtn.style.display = existing ? "" : "none";
     }
     whoSel.addEventListener("change", syncForm);
@@ -562,13 +718,13 @@
       var val = ta.value.trim();
       setLastWho(pid);
       saveEntry(key, pid, val);
-      showToast("保存しました。全員の画面に反映されます。");
+      showToast(t().saveToast);
     });
 
     delBtn.addEventListener("click", function(){
       var pid = whoSel.value;
       saveEntry(key, pid, "");
-      showToast("削除しました。");
+      showToast(t().deleteToast);
     });
 
     btns.appendChild(saveBtn);
@@ -596,7 +752,7 @@
     cats.forEach(function(cat){
       var b = document.createElement("button");
       b.className = "tab" + (cat === currentTab ? " active" : "");
-      b.textContent = cat;
+      b.textContent = t().cats[cat];
       b.addEventListener("click", function(){
         currentTab = cat;
         renderTabs();
@@ -615,15 +771,15 @@
 
       var area = document.createElement("div");
       area.className = "area";
-      area.textContent = r.area;
+      area.textContent = r.area[currentLang];
       card.appendChild(area);
 
       var h3 = document.createElement("h3");
-      h3.textContent = r.name;
+      h3.textContent = r.name[currentLang];
       card.appendChild(h3);
 
       var p = document.createElement("p");
-      p.textContent = r.desc;
+      p.textContent = r.desc[currentLang];
       card.appendChild(p);
 
       var actions = document.createElement("div");
@@ -631,10 +787,10 @@
 
       var a = document.createElement("a");
       a.className = "maplink";
-      a.href = mapsUrl(r.name, r.area);
+      a.href = mapsUrl(r.name.ja, r.area.ja);
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.textContent = "地図を見る ↗";
+      a.textContent = t().mapLink;
       actions.appendChild(a);
 
       var addWrap = document.createElement("div");
@@ -644,7 +800,7 @@
       DAYS.forEach(function(d){
         var opt = document.createElement("option");
         opt.value = d.id;
-        opt.textContent = "Day" + d.n;
+        opt.textContent = t().dayLabel + d.n;
         daySel.appendChild(opt);
       });
 
@@ -652,7 +808,7 @@
       SLOTS.forEach(function(s){
         var opt = document.createElement("option");
         opt.value = s.id;
-        opt.textContent = s.label;
+        opt.textContent = t().slotLabels[s.id];
         slotSel.appendChild(opt);
       });
 
@@ -660,16 +816,16 @@
 
       var addBtn = document.createElement("button");
       addBtn.className = "btn small ghost";
-      addBtn.textContent = "＋ 追加";
+      addBtn.textContent = t().addBtn;
       addBtn.addEventListener("click", function(){
         var pid = whoSel.value;
         var key = slotKey(daySel.value, slotSel.value);
         var existing = (entries[key] && entries[key][pid] && entries[key][pid].text) || "";
-        var line = "(候補) " + r.name + " — " + mapsUrl(r.name, r.area);
+        var line = t().candidatePrefix + r.name[currentLang] + " — " + mapsUrl(r.name.ja, r.area.ja);
         var next = existing ? existing + "\n" + line : line;
         setLastWho(pid);
         saveEntry(key, pid, next);
-        showToast(r.name + " を Day" + DAYS.find(function(d){return d.id===daySel.value;}).n + " " + slotSel.options[slotSel.selectedIndex].text + "（" + participantName(pid) + "）に追加しました。");
+        showToast(t().addToastTpl(r.name[currentLang], t().dayLabel + DAYS.find(function(d){return d.id===daySel.value;}).n, slotSel.options[slotSel.selectedIndex].text, participantName(pid)));
       });
 
       addWrap.appendChild(whoSel);
@@ -683,8 +839,57 @@
     });
   }
 
+  // ---------- render: static (non-templated) text ----------
+  function renderStatic(){
+    document.documentElement.lang = currentLang;
+    document.title = t().title;
+    document.getElementById("heroEyebrow").textContent = t().heroEyebrow;
+    document.getElementById("heroTitle").textContent = t().heroTitle;
+    document.getElementById("fromCity").textContent = t().fromCity;
+    document.getElementById("toCity").textContent = t().toCity;
+    document.getElementById("hintText").textContent = t().hint;
+    document.getElementById("scheduleHeading").textContent = t().scheduleHeading;
+    document.getElementById("scheduleRange").textContent = t().scheduleRange;
+    document.getElementById("recHeading").textContent = t().recHeading;
+    document.getElementById("recSub").textContent = t().recSub;
+    document.getElementById("footerText").textContent = t().footer;
+
+    var legsHost = document.getElementById("legs");
+    var legDays = [DAYS[0], DAYS[3], DAYS[6]];
+    legsHost.innerHTML = "";
+    legDays.forEach(function(day, i){
+      var flight = day.flight;
+      var span = day.date + "(" + day.wd[currentLang] + ") " + flight.dep + " " + t().depWord + " → " + flight.arr + " " + t().arrWord;
+      var leg = document.createElement("div");
+      leg.className = "leg";
+      leg.innerHTML = "<b>" + t().legLabels[i] + "｜" + flight.code + "</b><span>" + span + "</span>";
+      legsHost.appendChild(leg);
+    });
+
+    document.querySelectorAll(".lang-btn").forEach(function(btn){
+      btn.classList.toggle("active", btn.dataset.lang === currentLang);
+    });
+    setSyncStatus(lastSyncState);
+  }
+
+  function setLang(lang){
+    if (lang === currentLang) return;
+    currentLang = lang;
+    try { localStorage.setItem(LANG_KEY, lang); } catch(e){}
+    renderStatic();
+    renderTabs();
+    renderRecs();
+    renderDays();
+  }
+
+  document.getElementById("langToggle").addEventListener("click", function(e){
+    var btn = e.target.closest(".lang-btn");
+    if (btn) setLang(btn.dataset.lang);
+  });
+
   // ---------- init ----------
   // These need no network and must never be blocked by it.
+  renderStatic();
   renderDays();
   renderTabs();
   renderRecs();
@@ -728,7 +933,7 @@
       });
     } catch(e){
       setSyncStatus("offline");
-      showToast("オンライン同期に接続できませんでした。表示は端末に保存された最後の内容です。");
+      showToast(t().offlineInitToast);
     }
   })();
 
