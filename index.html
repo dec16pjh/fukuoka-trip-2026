@@ -1,0 +1,698 @@
+<title>福岡家族旅行 2026 プランニング</title>
+<style>
+  :root{
+    --paper: #FAF7F0;
+    --paper-2: #F1ECE0;
+    --paper-3: #ffffff;
+    --ink: #21283B;
+    --ink-soft: #5B6377;
+    --line: #DDD5C4;
+    --accent: #C97B2E;
+    --accent-ink: #7A4A15;
+    --indigo: #2F4468;
+    --coral: #C1503E;
+    --teal: #3E7C74;
+    --shadow: 0 1px 2px rgba(33,40,59,0.07), 0 10px 26px -14px rgba(33,40,59,0.22);
+    --radius: 14px;
+    --font-display: "Hiragino Mincho ProN", "YuMincho", "Yu Mincho", "Noto Serif JP", serif;
+    --font-body: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", "Meiryo", sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --paper: #161B29;
+      --paper-2: #1E2436;
+      --paper-3: #232A40;
+      --ink: #ECE6D6;
+      --ink-soft: #A9AFC2;
+      --line: #323C56;
+      --accent: #E3A75C;
+      --accent-ink: #F0C085;
+      --indigo: #8FA3D1;
+      --coral: #E08776;
+      --teal: #7CC0B4;
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 14px 30px -16px rgba(0,0,0,0.65);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper: #161B29; --paper-2: #1E2436; --paper-3: #232A40; --ink: #ECE6D6; --ink-soft: #A9AFC2;
+    --line: #323C56; --accent: #E3A75C; --accent-ink: #F0C085; --indigo: #8FA3D1; --coral: #E08776; --teal: #7CC0B4;
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 14px 30px -16px rgba(0,0,0,0.65);
+  }
+  :root[data-theme="light"]{
+    --paper: #FAF7F0; --paper-2: #F1ECE0; --paper-3: #ffffff; --ink: #21283B; --ink-soft: #5B6377;
+    --line: #DDD5C4; --accent: #C97B2E; --accent-ink: #7A4A15; --indigo: #2F4468; --coral: #C1503E; --teal: #3E7C74;
+    --shadow: 0 1px 2px rgba(33,40,59,0.07), 0 10px 26px -14px rgba(33,40,59,0.22);
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap{ max-width: 880px; margin: 0 auto; padding: 28px 20px 80px; }
+
+  a{ color: var(--indigo); }
+
+  /* ---------- Hero / ticket ---------- */
+  .ticket{
+    position: relative;
+    background: linear-gradient(155deg, var(--indigo) 0%, var(--ink) 100%);
+    color: #F4EFE1;
+    border-radius: var(--radius);
+    padding: 30px 28px 26px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .ticket::after{
+    content:"";
+    position:absolute; inset:0;
+    background: radial-gradient(circle at 88% -10%, rgba(227,167,92,0.35), transparent 45%);
+    pointer-events:none;
+  }
+  .eyebrow{
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent-ink); font-weight: 600; margin: 0 0 6px;
+  }
+  .ticket h1{
+    font-family: var(--font-display);
+    font-size: clamp(26px, 4.2vw, 34px);
+    margin: 0 0 18px;
+    text-wrap: balance;
+    font-weight: 600;
+    letter-spacing: .01em;
+  }
+  .route{
+    display:flex; align-items:center; gap: 14px; flex-wrap: wrap;
+    font-family: var(--font-display);
+    margin-bottom: 18px;
+  }
+  .route .city{ font-size: 22px; font-weight:600; }
+  .route .code{ font-size: 12px; opacity:.75; letter-spacing:.08em; display:block; margin-top:2px; font-family: var(--font-body);}
+  .route .plane{ flex:1; min-width:60px; height:1px; background: rgba(244,239,225,0.35); position:relative; }
+  .route .plane::after{
+    content:"✈"; position:absolute; right:0; top:50%; transform: translate(50%,-58%); font-size:14px; opacity:.85;
+  }
+  .ticket-dash{ border-top: 1.5px dashed rgba(244,239,225,0.3); margin: 18px 0; }
+  .legs{ display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 14px 22px; font-size: 13.5px; }
+  .legs .leg b{ display:block; font-size:14.5px; margin-bottom:2px; }
+  .legs .leg span{ opacity:.8; }
+  .pax-row{ margin-top: 18px; display:flex; flex-wrap:wrap; gap: 8px; }
+  .pax-chip{
+    font-size: 12.5px; padding: 5px 11px; border-radius: 999px;
+    background: rgba(244,239,225,0.12); border: 1px solid rgba(244,239,225,0.28);
+  }
+  .pax-chip b{ font-weight:600; }
+
+  /* ---------- unified share-link bar ---------- */
+  .linkbar{
+    position: sticky; top: 0; z-index: 30;
+    display:flex; align-items:center; gap:10px;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 20px;
+  }
+  .linkbar .lb-label{
+    font-size:11.5px; color: var(--ink-soft); letter-spacing:.03em; flex:none;
+    display:none;
+  }
+  .linkbar input{
+    flex:1; min-width:0; font-size:12.5px; color: var(--ink-soft);
+    text-overflow: ellipsis;
+  }
+  @media (min-width:640px){ .linkbar .lb-label{ display:block; } }
+
+  select, textarea, input[type=text]{
+    font-family: var(--font-body); font-size: 14.5px; color: var(--ink);
+    background: var(--paper-3); border: 1px solid var(--line); border-radius: 9px;
+    padding: 8px 10px;
+  }
+  select:focus, textarea:focus, input:focus, button:focus-visible{
+    outline: 2px solid var(--accent); outline-offset: 1px;
+  }
+  .btn{
+    font-family: var(--font-body); font-size: 13.5px; font-weight:600; cursor:pointer;
+    border-radius: 9px; padding: 9px 16px; border: 1px solid transparent;
+    background: var(--accent); color: #241505; letter-spacing:.02em;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{ box-shadow: var(--shadow); transform: translateY(-1px); }
+  .btn.ghost{ background: transparent; border-color: var(--line); color: var(--ink); }
+  .btn.small{ padding: 5px 11px; font-size:12.5px; }
+  .btn.danger{ background:transparent; color: var(--coral); border-color: var(--coral); }
+  .hint{ font-size: 12px; color: var(--ink-soft); margin-top: 14px; }
+  .toast{
+    position: fixed; left:50%; bottom: 26px; transform: translate(-50%, 20px);
+    background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: 999px;
+    font-size: 13.5px; opacity:0; pointer-events:none; transition: all .25s ease; box-shadow: var(--shadow);
+    z-index: 40;
+  }
+  .toast.show{ opacity: 1; transform: translate(-50%, 0); }
+
+  /* ---------- section headers ---------- */
+  .section-head{ margin: 40px 0 16px; display:flex; align-items:baseline; gap:12px; }
+  .section-head h2{
+    font-family: var(--font-display); font-size: 21px; margin:0; font-weight:600;
+  }
+  .section-head .count{ font-size:12.5px; color: var(--ink-soft); }
+
+  /* ---------- day card ---------- */
+  .day{
+    background: var(--paper-3); border: 1px solid var(--line); border-radius: var(--radius);
+    margin-bottom: 18px; box-shadow: var(--shadow); overflow:hidden;
+  }
+  .day-head{
+    display:flex; flex-direction:column; gap:8px; padding: 16px 20px;
+    border-bottom: 1px solid var(--line); background: var(--paper-2);
+  }
+  .day-head-top{ display:flex; align-items:center; gap:14px; }
+  .day-flight{
+    font-size: 12.5px; font-weight:600; color: var(--indigo);
+    padding-left: 54px; display:flex; align-items:center; gap:6px;
+  }
+  .day-num{
+    font-family: var(--font-display); font-size: 26px; font-weight:600; color: var(--indigo);
+    width: 40px; text-align:center;
+  }
+  .day-date{ flex:1; }
+  .day-date b{ font-size: 15.5px; }
+  .day-date span{ display:block; font-size:12.5px; color: var(--ink-soft); margin-top:1px; }
+  .day-note{
+    font-size: 11.5px; padding: 4px 10px; border-radius: 999px; white-space:nowrap;
+    background: rgba(193,80,62,0.12); color: var(--coral); border:1px solid rgba(193,80,62,0.3);
+  }
+  .slots{ display:grid; grid-template-columns: 1fr; }
+  .slot{ padding: 16px 20px; border-top: 1px solid var(--line); }
+  .slot:first-child{ border-top:none; }
+  .slot-head{ display:flex; align-items:center; gap:9px; margin-bottom: 10px; }
+  .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+  .dot.morning{ background: var(--indigo); }
+  .dot.lunch{ background: var(--teal); }
+  .dot.dinner{ background: var(--accent); }
+  .slot-head b{ font-family: var(--font-display); font-size:15px; font-weight:600; }
+  .slot-head .time{ font-size:11.5px; color: var(--ink-soft); }
+
+  .entries{ display:flex; flex-direction:column; gap:8px; margin-bottom: 10px; }
+  .entry{
+    display:flex; gap:10px; padding: 9px 12px; background: var(--paper-2);
+    border-radius: 9px; border: 1px solid var(--line);
+  }
+  .entry .name{ font-size:12px; font-weight:700; color: var(--indigo); flex:none; width: 108px; }
+  .entry .text{ font-size: 13.5px; white-space:pre-wrap; flex:1; }
+  .entry.family{ border-color: var(--accent); background: rgba(201,123,46,0.08); }
+  .entry.family .name{ color: var(--accent-ink); }
+  .empty-note{ font-size: 12.5px; color: var(--ink-soft); font-style: italic; margin-bottom: 10px; }
+
+  .add-form{ display:flex; flex-direction:column; gap:8px; }
+  .add-form .who-row{ display:flex; align-items:center; gap:8px; }
+  .add-form .who-row label{ font-size:12px; color: var(--ink-soft); flex:none; }
+  .add-form .who-row select{ font-size:13px; padding:6px 8px; }
+  .add-form .body-row{ display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+  .add-form textarea{ flex:1; min-width: 200px; min-height: 40px; resize: vertical; }
+  .add-form .btns{ display:flex; gap:6px; }
+
+  /* ---------- recommendations ---------- */
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom: 16px; }
+  .tab{
+    font-family: var(--font-body); font-size:13px; font-weight:600; padding:7px 14px; border-radius:999px;
+    border: 1px solid var(--line); background: var(--paper-3); color: var(--ink-soft); cursor:pointer;
+  }
+  .tab.active{ background: var(--indigo); color: #F4EFE1; border-color: var(--indigo); }
+  .rec-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap:14px; }
+  .rec-card{
+    background: var(--paper-3); border:1px solid var(--line); border-radius: 12px; padding: 15px 16px;
+    box-shadow: var(--shadow); display:flex; flex-direction:column; gap:8px;
+  }
+  .rec-card .area{ font-size:11px; color: var(--ink-soft); letter-spacing:.04em; }
+  .rec-card h3{ font-family: var(--font-display); font-size:16px; margin:0; font-weight:600; }
+  .rec-card p{ font-size:13px; color: var(--ink-soft); margin:0; flex:1; }
+  .rec-card .rec-actions{ display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+  .rec-card .maplink{ font-size:12.5px; font-weight:600; text-decoration:none; }
+  .add-to-day{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .add-to-day select{ font-size:12px; padding: 5px 6px; }
+
+  footer{ margin-top: 46px; font-size:12.5px; color: var(--ink-soft); text-align:center; }
+
+  @media (max-width: 520px){
+    .entry{ flex-direction:column; }
+    .entry .name{ width:auto; }
+    .day-head{ padding: 14px 16px; }
+    .slot{ padding: 14px 16px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .btn{ transition:none; }
+    .toast{ transition:none; }
+  }
+</style>
+
+<div class="linkbar">
+  <span class="lb-label">共有リンク（常にこの1つだけ）</span>
+  <input type="text" id="shareLink" readonly>
+  <button class="btn small" id="copyLinkBtn">コピー</button>
+</div>
+
+<div class="wrap">
+
+  <section class="ticket">
+    <p class="eyebrow">Family Trip · 家族旅行</p>
+    <h1>福岡旅行プラン 2026</h1>
+    <div class="route">
+      <div><span class="city">ソウル/仁川</span><span class="code">ICN</span></div>
+      <div class="plane"></div>
+      <div><span class="city">福岡</span><span class="code">FUK</span></div>
+    </div>
+    <div class="ticket-dash"></div>
+    <div class="legs">
+      <div class="leg"><b>行き｜LJ265</b><span>8/6(木) ICN 15:35 発 → FUK 17:00 着</span></div>
+      <div class="leg"><b>帰り①｜LJ274</b><span>8/9(日) FUK 12:10 発 → ICN 13:40 着</span></div>
+      <div class="leg"><b>帰り②｜LJ274</b><span>8/12(水) FUK 12:10 発 → ICN 13:40 着</span></div>
+    </div>
+    <div class="pax-row">
+      <span class="pax-chip"><b>UENO / AI</b> ・8/6–8/12</span>
+      <span class="pax-chip"><b>PARK / SUYON</b> ・8/6–8/12</span>
+      <span class="pax-chip"><b>PARK / JONGHO</b> ・8/6–8/9</span>
+      <span class="pax-chip"><b>PARK / SUBIN</b> ・8/6–8/9</span>
+    </div>
+  </section>
+
+  <p class="hint">各項目に希望を入力するときは、その場で名前（またはFamily）を選んでから「保存」を押してください。保存するとすぐこの画面に反映され、一番上の共有リンクも自動的に最新の内容に更新されます。他の家族に送るときは、必ずそのリンクをコピーして送ってください。受け取った人は、そのリンクを開いてから追加の入力・保存をしてください。</p>
+
+  <div class="section-head">
+    <h2>日程</h2>
+    <span class="count">2026/8/6(木) – 8/12(水)</span>
+  </div>
+  <div id="days"></div>
+
+  <div class="section-head">
+    <h2>おすすめスポット・お店</h2>
+    <span class="count">気になる場所はそのまま日程に追加できます</span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="rec-grid" id="recGrid"></div>
+
+  <footer>UENO / AI ・ PARK / JONGHO ・ PARK / SUBIN ・ PARK / SUYON の福岡旅行のために作成</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var PARTICIPANTS = [
+    { id:"ueno_ai", name:"UENO / AI" },
+    { id:"park_jongho", name:"PARK / JONGHO" },
+    { id:"park_subin", name:"PARK / SUBIN" },
+    { id:"park_suyon", name:"PARK / SUYON" },
+    { id:"family", name:"Family（家族みんな）" }
+  ];
+
+  var SLOTS = [
+    { id:"morning", label:"朝", time:"8:00–11:00" },
+    { id:"lunch", label:"昼", time:"11:00–17:00" },
+    { id:"dinner", label:"夜", time:"17:00–21:00" }
+  ];
+
+  var DAYS = [
+    { id:"d1", n:1, date:"8/6", wd:"木", note:"到着日",
+      flight:"LJ265｜ICN 15:35 発 → FUK 17:00 着" },
+    { id:"d2", n:2, date:"8/7", wd:"金", note:"" },
+    { id:"d3", n:3, date:"8/8", wd:"土", note:"" },
+    { id:"d4", n:4, date:"8/9", wd:"日", note:"JONGHO・SUBIN 帰国",
+      flight:"LJ274｜FUK 12:10 発 → ICN 13:40 着（JONGHO・SUBIN 搭乗）" },
+    { id:"d5", n:5, date:"8/10", wd:"月", note:"AI・SUYON のみ" },
+    { id:"d6", n:6, date:"8/11", wd:"火", note:"AI・SUYON のみ" },
+    { id:"d7", n:7, date:"8/12", wd:"水", note:"AI・SUYON 帰国",
+      flight:"LJ274｜FUK 12:10 発 → ICN 13:40 着（AI・SUYON 搭乗）" }
+  ];
+
+  var RECS = [
+    { cat:"観光", area:"百道浜", name:"福岡タワー", desc:"海浜公園そばに建つ234mのタワー。夜景が特に人気。" },
+    { cat:"観光", area:"中央区", name:"大濠公園", desc:"池を囲む遊歩道が気持ちいい市民公園。ボートもあり。" },
+    { cat:"観光", area:"太宰府市", name:"太宰府天満宮", desc:"学問の神様を祀る古社。参道の梅ヶ枝餅も名物。" },
+    { cat:"観光", area:"中洲", name:"中洲屋台街", desc:"那珂川沿いに屋台が並ぶ、博多の夜の名物エリア。" },
+    { cat:"観光", area:"東区", name:"マリンワールド海の中道", desc:"イルカ・アシカショーが人気の水族館。" },
+    { cat:"観光", area:"博多区", name:"博多町家ふるさと館", desc:"博多の伝統文化と町家建築を紹介するミニ資料館。" },
+    { cat:"グルメ", area:"天神", name:"一蘭 天神西通り店", desc:"博多とんこつラーメンの有名店。一人集中カウンター。" },
+    { cat:"グルメ", area:"博多区", name:"博多もつ鍋 やまや", desc:"福岡名物もつ鍋を気軽に楽しめる人気店。" },
+    { cat:"グルメ", area:"天神", name:"元祖 博多めんたい重 天神本店", desc:"明太子をたっぷりのせた重箱ご飯が名物。" },
+    { cat:"グルメ", area:"中洲", name:"ふくや 中洲本店", desc:"明太子の老舗。お土産探しにも便利。" },
+    { cat:"グルメ", area:"今泉", name:"鉄なべ 今泉店", desc:"博多名物、鉄鍋で焼く餃子の専門店。" },
+    { cat:"ショッピング", area:"博多区", name:"キャナルシティ博多", desc:"噴水ショーが名物の複合商業施設。飲食店も豊富。" },
+    { cat:"ショッピング", area:"天神", name:"天神地下街", desc:"天神駅直結、雨でも歩ける地下ショッピングモール。" },
+    { cat:"ショッピング", area:"百道浜", name:"マークイズ福岡ももち", desc:"福岡タワー隣の大型モール。フードコートも充実。" }
+  ];
+
+  var STORAGE_KEY = "fukuoka-trip-2026-entries";
+  var WHO_KEY = "fukuoka-trip-2026-who";
+
+  // ---------- state ----------
+  var entries = loadEntries();
+  var currentTab = "観光";
+
+  function getLastWho(){ return localStorage.getItem(WHO_KEY) || PARTICIPANTS[0].id; }
+  function setLastWho(id){ try { localStorage.setItem(WHO_KEY, id); } catch(e){} }
+
+  function buildWhoSelect(selectedId){
+    var sel = document.createElement("select");
+    sel.className = "who-mini";
+    PARTICIPANTS.forEach(function(p){
+      var opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      if (p.id === selectedId) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    return sel;
+  }
+
+  function slotKey(dayId, slotId){ return dayId + "_" + slotId; }
+
+  function toB64(obj){
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  }
+  function fromB64(str){
+    return JSON.parse(decodeURIComponent(escape(atob(str))));
+  }
+
+  function loadEntries(){
+    var hash = location.hash ? location.hash.slice(1) : "";
+    if (hash){
+      try { return fromB64(hash); } catch(e) { /* fall through */ }
+    }
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e){}
+    return {};
+  }
+
+  function persist(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(entries)); } catch(e){}
+    var hash = toB64(entries);
+    history.replaceState(null, "", "#" + hash);
+    updateShareLink();
+  }
+
+  function updateShareLink(){
+    var input = document.getElementById("shareLink");
+    input.value = location.href;
+  }
+
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(showToast._tm);
+    showToast._tm = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  function participantName(id){
+    for (var i=0;i<PARTICIPANTS.length;i++) if (PARTICIPANTS[i].id===id) return PARTICIPANTS[i].name;
+    return id;
+  }
+
+  // ---------- render: days ----------
+  function renderDays(){
+    var host = document.getElementById("days");
+    host.innerHTML = "";
+
+    DAYS.forEach(function(day){
+      var dayEl = document.createElement("div");
+      dayEl.className = "day";
+
+      var head = document.createElement("div");
+      head.className = "day-head";
+      head.innerHTML =
+        '<div class="day-head-top">' +
+          '<div class="day-num">' + day.n + '</div>' +
+          '<div class="day-date"><b>' + day.date + '（' + day.wd + '）</b>' +
+          '<span>Day ' + day.n + '</span></div>' +
+          (day.note ? '<div class="day-note">' + day.note + '</div>' : "") +
+        '</div>' +
+        (day.flight ? '<div class="day-flight">✈ ' + day.flight + '</div>' : "");
+      dayEl.appendChild(head);
+
+      var slotsWrap = document.createElement("div");
+      slotsWrap.className = "slots";
+
+      SLOTS.forEach(function(slot){
+        slotsWrap.appendChild(renderSlot(day, slot));
+      });
+
+      dayEl.appendChild(slotsWrap);
+      host.appendChild(dayEl);
+    });
+  }
+
+  function renderSlot(day, slot){
+    var key = slotKey(day.id, slot.id);
+    var data = entries[key] || {};
+
+    var slotEl = document.createElement("div");
+    slotEl.className = "slot";
+    slotEl.dataset.day = day.id;
+    slotEl.dataset.slot = slot.id;
+
+    var head = document.createElement("div");
+    head.className = "slot-head";
+    head.innerHTML =
+      '<span class="dot ' + slot.id + '"></span>' +
+      '<b>' + slot.label + '</b>' +
+      '<span class="time">' + slot.time + '</span>';
+    slotEl.appendChild(head);
+
+    var ids = Object.keys(data).filter(function(id){ return data[id] && data[id].text; });
+
+    if (ids.length){
+      var list = document.createElement("div");
+      list.className = "entries";
+      ids.forEach(function(pid){
+        var row = document.createElement("div");
+        row.className = "entry" + (pid === "family" ? " family" : "");
+        var nameEl = document.createElement("div");
+        nameEl.className = "name";
+        nameEl.textContent = participantName(pid);
+        var textEl = document.createElement("div");
+        textEl.className = "text";
+        textEl.textContent = data[pid].text;
+        row.appendChild(nameEl);
+        row.appendChild(textEl);
+        list.appendChild(row);
+      });
+      slotEl.appendChild(list);
+    } else {
+      var empty = document.createElement("div");
+      empty.className = "empty-note";
+      empty.textContent = "まだ希望が入力されていません。";
+      slotEl.appendChild(empty);
+    }
+
+    var form = document.createElement("div");
+    form.className = "add-form";
+
+    var whoRow = document.createElement("div");
+    whoRow.className = "who-row";
+    var whoLabel = document.createElement("label");
+    whoLabel.textContent = "誰の希望？";
+    var whoSel = buildWhoSelect(getLastWho());
+    whoRow.appendChild(whoLabel);
+    whoRow.appendChild(whoSel);
+
+    var bodyRow = document.createElement("div");
+    bodyRow.className = "body-row";
+    var ta = document.createElement("textarea");
+    var btns = document.createElement("div");
+    btns.className = "btns";
+    var saveBtn = document.createElement("button");
+    saveBtn.className = "btn small";
+    saveBtn.textContent = "保存";
+    var delBtn = document.createElement("button");
+    delBtn.className = "btn small danger";
+    delBtn.textContent = "削除";
+
+    function syncForm(){
+      var pid = whoSel.value;
+      var existing = data[pid] && data[pid].text;
+      ta.value = existing || "";
+      ta.placeholder = (pid === "family" ? "家族みんなの希望を入力" : participantName(pid) + " の希望を入力") + "（例：太宰府天満宮を観光したい）";
+      delBtn.style.display = existing ? "" : "none";
+    }
+    whoSel.addEventListener("change", syncForm);
+    syncForm();
+
+    saveBtn.addEventListener("click", function(){
+      var pid = whoSel.value;
+      var val = ta.value.trim();
+      if (!entries[key]) entries[key] = {};
+      if (val){
+        entries[key][pid] = { text: val, ts: Date.now() };
+      } else {
+        delete entries[key][pid];
+      }
+      setLastWho(pid);
+      persist();
+      renderDays();
+      showToast("保存しました。共有リンクを更新しました。");
+    });
+
+    delBtn.addEventListener("click", function(){
+      var pid = whoSel.value;
+      if (entries[key]) delete entries[key][pid];
+      persist();
+      renderDays();
+      showToast("削除しました。");
+    });
+
+    btns.appendChild(saveBtn);
+    btns.appendChild(delBtn);
+    bodyRow.appendChild(ta);
+    bodyRow.appendChild(btns);
+    form.appendChild(whoRow);
+    form.appendChild(bodyRow);
+    slotEl.appendChild(form);
+
+    return slotEl;
+  }
+
+  // ---------- render: recommendations ----------
+  function mapsUrl(name, area){
+    var q = encodeURIComponent(name + " " + area + " 福岡");
+    return "https://www.google.com/maps/search/?api=1&query=" + q;
+  }
+
+  function renderTabs(){
+    var cats = [];
+    RECS.forEach(function(r){ if (cats.indexOf(r.cat) === -1) cats.push(r.cat); });
+    var host = document.getElementById("tabs");
+    host.innerHTML = "";
+    cats.forEach(function(cat){
+      var b = document.createElement("button");
+      b.className = "tab" + (cat === currentTab ? " active" : "");
+      b.textContent = cat;
+      b.addEventListener("click", function(){
+        currentTab = cat;
+        renderTabs();
+        renderRecs();
+      });
+      host.appendChild(b);
+    });
+  }
+
+  function renderRecs(){
+    var host = document.getElementById("recGrid");
+    host.innerHTML = "";
+    RECS.filter(function(r){ return r.cat === currentTab; }).forEach(function(r){
+      var card = document.createElement("div");
+      card.className = "rec-card";
+
+      var area = document.createElement("div");
+      area.className = "area";
+      area.textContent = r.area;
+      card.appendChild(area);
+
+      var h3 = document.createElement("h3");
+      h3.textContent = r.name;
+      card.appendChild(h3);
+
+      var p = document.createElement("p");
+      p.textContent = r.desc;
+      card.appendChild(p);
+
+      var actions = document.createElement("div");
+      actions.className = "rec-actions";
+
+      var a = document.createElement("a");
+      a.className = "maplink";
+      a.href = mapsUrl(r.name, r.area);
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = "地図を見る ↗";
+      actions.appendChild(a);
+
+      var addWrap = document.createElement("div");
+      addWrap.className = "add-to-day";
+
+      var daySel = document.createElement("select");
+      DAYS.forEach(function(d){
+        var opt = document.createElement("option");
+        opt.value = d.id;
+        opt.textContent = "Day" + d.n;
+        daySel.appendChild(opt);
+      });
+
+      var slotSel = document.createElement("select");
+      SLOTS.forEach(function(s){
+        var opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = s.label;
+        slotSel.appendChild(opt);
+      });
+
+      var whoSel = buildWhoSelect(getLastWho());
+
+      var addBtn = document.createElement("button");
+      addBtn.className = "btn small ghost";
+      addBtn.textContent = "＋ 追加";
+      addBtn.addEventListener("click", function(){
+        var pid = whoSel.value;
+        var key = slotKey(daySel.value, slotSel.value);
+        if (!entries[key]) entries[key] = {};
+        var existing = (entries[key][pid] && entries[key][pid].text) || "";
+        var line = "(候補) " + r.name + " — " + mapsUrl(r.name, r.area);
+        var next = existing ? existing + "\n" + line : line;
+        entries[key][pid] = { text: next, ts: Date.now() };
+        setLastWho(pid);
+        persist();
+        renderDays();
+        showToast(r.name + " を Day" + DAYS.find(function(d){return d.id===daySel.value;}).n + " " + slotSel.options[slotSel.selectedIndex].text + "（" + participantName(pid) + "）に追加しました。");
+      });
+
+      addWrap.appendChild(whoSel);
+      addWrap.appendChild(daySel);
+      addWrap.appendChild(slotSel);
+      addWrap.appendChild(addBtn);
+      actions.appendChild(addWrap);
+
+      card.appendChild(actions);
+      host.appendChild(card);
+    });
+  }
+
+  // ---------- copy link ----------
+  document.getElementById("copyLinkBtn").addEventListener("click", function(){
+    var input = document.getElementById("shareLink");
+    var url = input.value;
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(function(){
+        showToast("リンクをコピーしました。");
+      }).catch(function(){ fallbackCopy(input); });
+    } else {
+      fallbackCopy(input);
+    }
+  });
+
+  function fallbackCopy(input){
+    input.focus();
+    input.select();
+    try {
+      document.execCommand("copy");
+      showToast("リンクをコピーしました。");
+    } catch(e){
+      showToast("コピーできませんでした。手動で選択してください。");
+    }
+  }
+
+  // ---------- init ----------
+  renderDays();
+  renderTabs();
+  renderRecs();
+  persist();
+
+})();
+</script>
