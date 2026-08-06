@@ -575,17 +575,29 @@
     var url = "https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017" +
       "&hourly=weather_code,temperature_2m&timezone=Asia%2FTokyo" +
       "&start_date=" + DAYS[0].iso + "&end_date=" + DAYS[DAYS.length - 1].iso;
-    fetch(url).then(function(res){ return res.json(); }).then(function(data){
-      if (!data || !data.hourly || !data.hourly.time) return;
+    fetch(url).then(function(res){
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }).then(function(data){
+      if (!data || !data.hourly || !data.hourly.time){
+        showToast("[debug] weather: no hourly data in response", 8000);
+        return;
+      }
       var times = data.hourly.time;
       var codes = data.hourly.weather_code || data.hourly.weathercode;
       var temps = data.hourly.temperature_2m;
-      if (!codes || !temps) return;
+      if (!codes || !temps){
+        showToast("[debug] weather: missing code/temp arrays", 8000);
+        return;
+      }
       for (var i = 0; i < times.length; i++){
         weatherByHour[times[i]] = { code: codes[i], temp: temps[i] };
       }
+      showToast("[debug] weather: loaded " + times.length + "h, e.g. " + JSON.stringify(weatherFor(DAYS[0], "morning")), 8000);
       renderDays();
-    }).catch(function(){ /* weather is a nice-to-have; leave slots without it */ });
+    }).catch(function(e){
+      showToast("[debug] weather fetch failed: " + (e && e.message ? e.message : String(e)), 8000);
+    });
   }
 
   function weatherFor(day, slotId){
@@ -628,12 +640,12 @@
       : t().connecting;
   }
 
-  function showToast(msg){
+  function showToast(msg, duration){
     var toastEl = document.getElementById("toast");
     toastEl.textContent = msg;
     toastEl.classList.add("show");
     clearTimeout(showToast._tm);
-    showToast._tm = setTimeout(function(){ toastEl.classList.remove("show"); }, 2200);
+    showToast._tm = setTimeout(function(){ toastEl.classList.remove("show"); }, duration || 2200);
   }
 
   function participantName(id){
