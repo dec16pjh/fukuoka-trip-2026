@@ -567,12 +567,20 @@
   var weatherByHour = {};
 
   function fetchWeather(){
+    // Open-Meteo renamed this hourly variable from "weathercode" to
+    // "weather_code" to match their snake_case convention; request the
+    // current name but accept either key when reading the response, in
+    // case that changes again or an older/cached edge responds with the
+    // legacy name.
     var url = "https://api.open-meteo.com/v1/forecast?latitude=33.5904&longitude=130.4017" +
-      "&hourly=weathercode,temperature_2m&timezone=Asia%2FTokyo" +
+      "&hourly=weather_code,temperature_2m&timezone=Asia%2FTokyo" +
       "&start_date=" + DAYS[0].iso + "&end_date=" + DAYS[DAYS.length - 1].iso;
     fetch(url).then(function(res){ return res.json(); }).then(function(data){
       if (!data || !data.hourly || !data.hourly.time) return;
-      var times = data.hourly.time, codes = data.hourly.weathercode, temps = data.hourly.temperature_2m;
+      var times = data.hourly.time;
+      var codes = data.hourly.weather_code || data.hourly.weathercode;
+      var temps = data.hourly.temperature_2m;
+      if (!codes || !temps) return;
       for (var i = 0; i < times.length; i++){
         weatherByHour[times[i]] = { code: codes[i], temp: temps[i] };
       }
