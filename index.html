@@ -579,25 +579,16 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       return res.json();
     }).then(function(data){
-      if (!data || !data.hourly || !data.hourly.time){
-        showToast("[debug] weather: no hourly data in response", 8000);
-        return;
-      }
+      if (!data || !data.hourly || !data.hourly.time) return;
       var times = data.hourly.time;
       var codes = data.hourly.weather_code || data.hourly.weathercode;
       var temps = data.hourly.temperature_2m;
-      if (!codes || !temps){
-        showToast("[debug] weather: missing code/temp arrays", 8000);
-        return;
-      }
+      if (!codes || !temps) return;
       for (var i = 0; i < times.length; i++){
         weatherByHour[times[i]] = { code: codes[i], temp: temps[i] };
       }
-      showToast("[debug] weather: loaded " + times.length + "h, e.g. " + JSON.stringify(weatherFor(DAYS[0], "morning")), 8000);
       renderDays();
-    }).catch(function(e){
-      showToast("[debug] weather fetch failed: " + (e && e.message ? e.message : String(e)), 8000);
-    });
+    }).catch(function(){ /* weather is a nice-to-have; leave slots without it */ });
   }
 
   function weatherFor(day, slotId){
