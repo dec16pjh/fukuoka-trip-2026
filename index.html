@@ -193,6 +193,20 @@
     font-size: 11.5px; padding: 4px 10px; border-radius: 999px; white-space:nowrap;
     background: rgba(193,80,62,0.12); color: var(--coral); border:1px solid rgba(193,80,62,0.3);
   }
+  .today-badge{
+    font-size: 11px; font-weight:700; letter-spacing:.03em; padding: 4px 10px; border-radius: 999px;
+    white-space:nowrap; background: var(--accent); color: #241505;
+  }
+  .day.today{
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), var(--shadow);
+  }
+  .day.today .day-head{
+    background: linear-gradient(135deg, rgba(201,123,46,0.16), rgba(201,123,46,0.05));
+  }
+  .today-line{
+    font-size: 13.5px; font-weight:600; color: var(--accent-ink); margin: 14px 0 0;
+  }
   .slots{ display:grid; grid-template-columns: 1fr; }
   .slot{ padding: 16px 20px; border-top: 1px solid var(--line); }
   .slot:first-child{ border-top:none; }
@@ -310,6 +324,7 @@
   </section>
 
   <p class="hint" id="hintText"></p>
+  <p class="today-line" id="todayLine"></p>
 
   <div class="section-head">
     <h2 id="scheduleHeading"></h2>
@@ -431,7 +446,9 @@
       familyMembers: "家族みんな",
       candidatePrefix: "(候補) ",
       slotLabels: { morning:"朝", lunch:"昼", dinner:"夜" },
-      cats: { sightseeing:"観光", food:"グルメ", shopping:"ショッピング" }
+      cats: { sightseeing:"観光", food:"グルメ", shopping:"ショッピング" },
+      todayBadge: "本日",
+      todayLineTpl: function(d){ return "📅 今日は" + d + "です。"; }
     },
     ko: {
       title: "후쿠오카 가족여행 2026 플래닝",
@@ -464,7 +481,9 @@
       familyMembers: "가족 모두",
       candidatePrefix: "(후보) ",
       slotLabels: { morning:"아침", lunch:"점심", dinner:"저녁" },
-      cats: { sightseeing:"관광", food:"맛집", shopping:"쇼핑" }
+      cats: { sightseeing:"관광", food:"맛집", shopping:"쇼핑" },
+      todayBadge: "오늘",
+      todayLineTpl: function(d){ return "📅 오늘은 " + d + "입니다."; }
     }
   };
 
@@ -511,6 +530,20 @@
   }
 
   function slotKey(dayId, slotId){ return dayId + "_" + slotId; }
+
+  // ---------- today ----------
+  // Always computed in Japan's timezone, since that's where the trip
+  // actually happens, regardless of a visitor's device timezone.
+  function todayISO(){
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tokyo" }).format(new Date());
+  }
+
+  function formatTodayLabel(){
+    var locale = currentLang === "ko" ? "ko-KR" : "ja-JP";
+    return new Intl.DateTimeFormat(locale, {
+      timeZone: "Asia/Tokyo", month: "numeric", day: "numeric", weekday: "short"
+    }).format(new Date());
+  }
 
   // ---------- free-text translation ----------
   // Family members type their wishes in whichever language they like.
@@ -654,10 +687,12 @@
   function renderDays(){
     var host = document.getElementById("days");
     host.innerHTML = "";
+    var today = todayISO();
 
     DAYS.forEach(function(day){
+      var isToday = day.iso === today;
       var dayEl = document.createElement("div");
-      dayEl.className = "day";
+      dayEl.className = "day" + (isToday ? " today" : "");
 
       var head = document.createElement("div");
       head.className = "day-head";
@@ -665,6 +700,7 @@
         '<div class="day-head-top">' +
           '<div class="day-date"><b>' + day.date + '（' + day.wd[currentLang] + '）</b>' +
           '<span>' + t().dayLabel + ' ' + day.n + '</span></div>' +
+          (isToday ? '<div class="today-badge">' + t().todayBadge + '</div>' : "") +
           (day.note ? '<div class="day-note">' + day.note[currentLang] + '</div>' : "") +
         '</div>' +
         (day.flight ? '<div class="day-flight">✈ ' + flightLine(day.flight) + '</div>' : "");
@@ -906,6 +942,7 @@
     document.getElementById("recHeading").textContent = t().recHeading;
     document.getElementById("recSub").textContent = t().recSub;
     document.getElementById("footerText").textContent = t().footer;
+    document.getElementById("todayLine").textContent = t().todayLineTpl(formatTodayLabel());
 
     var legsHost = document.getElementById("legs");
     var legDays = [DAYS[0], DAYS[3], DAYS[6]];
